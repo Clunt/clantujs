@@ -1,0 +1,44 @@
+{
+  "name": "clantujs",
+  "version": "1.0.0",
+  "description": "Tiny client-slide router.",
+  "main": "dist/clantu.js",
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "dev": "npm run serve-test & webpack --watch --config build/webpack.dev.config.js",
+    "build": "node build/build.js",
+    "release": "bash ./build/release.sh",
+    "serve-example": "webpack-dev-server --inline --hot --config example/advanced/webpack.config.js --content-base example/advanced --history-api-fallback --host 0.0.0.0",
+    "serve-test": "webpack-dev-server --quiet --config test/unit/webpack.config.js --content-base test/unit --history-api-fallback --host 0.0.0.0 --port 8081",
+    "test": "echo TODO"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "rollup": "^0.33.1",
+    "uglify-js": "^2.7.0",
+    "webpack": "^1.13.1",
+    "webpack-dev-server": "^1.14.1",
+    "babel-core": "^6.10.4",
+    "babel-loader": "^6.2.4",
+    "babel-runtime": "^6.9.2",
+    "babel-preset-es2015": "^6.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Clunt/clantujs.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Clunt/clantujs/issues"
+  },
+  "homepage": "https://github.com/Clunt/clantujs#readme"
+}

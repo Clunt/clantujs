@@ -1,0 +1,9 @@
+.DS_Store
+node_modules
+coverage
+explorations
+TODOS.md
+*.log
+docs/_book
+dist/clantu.min.js.gz
+dist/clantu.js.map
