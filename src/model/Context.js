@@ -2,23 +2,25 @@ import querystring from '../lib/querystring'
 
 
 function Context(path, state) {
-  this.state = state || {};
-  this.path = path;
-  this.params = {};
-
   var pathname = path;
-  var hashIndex = pathname.indexOf('#');
 
-  this.hash = ~hashIndex ? pathname.slice(hashIndex + 1) : '';
-  pathname = ~hashIndex ? pathname.slice(0, hashIndex) : pathname;
+  var hash_i = pathname.indexOf('#');
+  var hash = ~hash_i ? pathname.slice(hash_i + 1) : '';
+  pathname = ~hash_i ? pathname.slice(0, hash_i) : pathname;
 
-  var searchIndex = pathname.indexOf('?');
+  var search_i = pathname.indexOf('?');
+  search = ~search_i ? pathname.slice(search_i + 1) : '';
+  pathname = ~search_i ? pathname.slice(0, search_i) : pathname;
 
-  this.querystring = ~searchIndex ? pathname.slice(searchIndex + 1) : '';
-  pathname = ~searchIndex ? pathname.slice(0, searchIndex) : pathname;
+  var query = querystring(search);
 
-  this.query = querystring(this.querystring);
-  this.pathname = pathname;
+  this.$state = state || {};
+  this.$path = path;
+  this.$params = {};
+  this.$pathname = pathname;
+  this.$hash = hash;
+  this.$querystring = search;
+  this.$query = query;
 }
 
 export default Context

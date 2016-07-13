@@ -127,7 +127,7 @@ function preventDefault(evt) {
 
 var isarray = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
-}
+};
 
 export default {}
 

@@ -2,6 +2,7 @@ import router from './router'
 import HashHistory from './history/hash'
 import HTML5History from './history/html5'
 import Link from './link'
+import template from './template'
 
 var historyBackends = {
   hash: HashHistory,
@@ -57,6 +58,10 @@ function C(option) {
 }
 
 C.prototype.router = router.register;
+
+C.prototype.template = template;
+
+C.prototype.render = template.render;
 
 C.prototype.start = function(option) {
   if (this.running) return;
