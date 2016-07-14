@@ -37,11 +37,32 @@ var isArray = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
+function extend(obj) {
+  obj = typeof obj === 'object' ? obj : {};
+
+  var args = arguments;
+  if (args.length > 1) {
+    for (var i = 1; i < args.length; i++) {
+      var arg = args[i];
+      if (typeof arg === 'object' && !isArray(arg)) {
+        for (var key in arg) {
+          if (arg.hasOwnProperty(key)) {
+            var value = arg[key];
+            obj[key] = typeof value === 'object' ? extend(obj[key], value) : value;
+          }
+        }
+      }
+    }
+  }
+  return obj;
+}
+
 export default {}
 
 export {
   bindEvent,
   removeEvent,
   preventDefault,
-  isArray
+  isArray,
+  extend
 }

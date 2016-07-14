@@ -1,4 +1,4 @@
-import config from '../lib/config'
+import store from '../lib/store'
 
 
 /**
@@ -8,5 +8,5 @@ import config from '../lib/config'
  * @param  {String} partial 模版片段
  */
 export default function partial(name, partial) {
-  config.$partials[name] = partial;
+  store.partials[name] = partial;
 }

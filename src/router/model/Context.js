@@ -2,7 +2,7 @@ import querystring from '../lib/querystring'
 import { render } from '../../template'
 
 
-function Context(path, state) {
+function Context(path, state, referer, prev_ctx) {
   var pathname = path;
 
   var hash_i = pathname.indexOf('#');
@@ -22,6 +22,10 @@ function Context(path, state) {
   this.$hash = hash;
   this.$querystring = search;
   this.$query = query;
+  this.$referer = referer;
+
+  this.$prev = prev_ctx;
+
   this.$render = render;
 }
 

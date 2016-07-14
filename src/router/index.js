@@ -7,7 +7,7 @@ var EXITS = [];
 var PREV_CONTEXT;
 
 function match(path, state) {
-  var ctx = new Context(path, state);
+  var ctx = new Context(path, state, PATH_CURRENT, PREV_CONTEXT);
   PATH_CURRENT = ctx.$path;
   var prev_ctx = PREV_CONTEXT;
   var callbacks_index = 0;

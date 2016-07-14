@@ -1,5 +1,9 @@
-import { defaults } from './config'
+import { extend } from '../../lib/util'
+import store from './store'
+import { defaults } from '../config'
+import { showDebugInfo } from './error'
 import compiler from './compiler'
+
 
 /**
  * 编译模板
@@ -19,16 +23,13 @@ import compiler from './compiler'
  */
 function compile(source, options) {
   // 合并默认配置
-  options = options || {};
-  for (var name in defaults) {
-    if (options[name] === undefined) {
-      options[name] = defaults[name];
-    }
-  }
+  options = extend({}, defaults, options);
 
+  var filename = options.filename;
   try {
     var Render = compiler(source, options);
   } catch (e) {
+    e.filename = filename || 'anonymous';
     e.name = 'Syntax Error';
     return showDebugInfo(e);
   }
@@ -46,6 +47,10 @@ function compile(source, options) {
   render.toString = function() {
     return Render.toString();
   };
+
+  if (filename && options.cache) {
+    store.cache[filename] = render;
+  }
 
   return render;
 };

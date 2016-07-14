@@ -1,3 +1,5 @@
+import config from './config'
+import { extend } from './lib/util'
 import { register, match } from './router'
 import template, { render } from './template'
 import Listener from './listener'
@@ -6,7 +8,8 @@ var app = null;
 var router = register;
 
 function Clantu(option) {
-  option = option || {};
+  option = extend(config, option);
+
   var self = this;
   this.running = false;
   this.listener = new Listener(option.listener, function(path, state) {

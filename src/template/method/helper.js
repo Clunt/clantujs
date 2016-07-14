@@ -1,4 +1,4 @@
-import config from '../lib/config'
+import store from '../lib/store'
 
 
 /**
@@ -8,5 +8,5 @@ import config from '../lib/config'
  * @param  {Function} helper 方法
  */
 export default function helper(name, helper) {
-  config.$helpers[name] = helper;
+  store.helpers[name] = helper;
 }

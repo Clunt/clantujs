@@ -1,4 +1,6 @@
 import compile from '../lib/compile'
+import store from '../lib/store'
+import { getCache } from '../lib/get'
 
 
 /**
@@ -10,6 +12,10 @@ import compile from '../lib/compile'
  * @return {String}         渲染好的字符串
  */
 export default function render(source, data, options) {
-  var render = compile(source, options);
+  options = options || {};
+  if (options.cache === false) {
+    store[options.filename] = undefined;
+  }
+  var render = getCache(options.filename) || compile(source, options);
   return render(data);
 };

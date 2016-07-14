@@ -1,4 +1,6 @@
 import { isArray } from '../../lib/util'
+import store from './store'
+import { getPartial } from './get'
 
 
 var toString = function(value, type) {
@@ -44,10 +46,19 @@ var each = function(data, callback) {
   }
 };
 
+var include = function (partial, data) {
+  var fn = getPartial(partial) || showDebugInfo({
+    partial: partial,
+    name: 'Render Error',
+    message: 'Partial not found'
+  });
+  return data ? fn(data) : fn;
+};
+
 
 export default {
-  $helpers: {},
-  $include: 'TODO',
+  $helpers: store.helpers,
+  $include: include,
   $string: toString,
   $escape: escapeHTML,
   $each: each
