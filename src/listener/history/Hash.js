@@ -1,4 +1,4 @@
-import { resolvePath, hashChange } from '../lib/util'
+import { resolvePath, hashChange } from '../utils'
 
 function HashHistory(option) {
   this.onChange = option.onChange;

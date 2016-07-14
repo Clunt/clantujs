@@ -1,4 +1,5 @@
-import { bindEvent, removeEvent, resolvePath, hashChange } from '../lib/util'
+import { bindEvent, removeEvent } from '../../lib/util'
+import { resolvePath, hashChange } from '../utils'
 
 
 function Html5History(option) {

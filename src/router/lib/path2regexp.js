@@ -1,4 +1,4 @@
-import { isarray } from './util'
+import { isArray } from '../../lib/util'
 
 /**
  * The main path matching regexp utility.
@@ -168,7 +168,7 @@ function tokensToFunction (tokens) {
         }
       }
 
-      if (isarray(value)) {
+      if (isArray(value)) {
         if (!token.repeat) {
           throw new TypeError('Expected "' + token.name + '" to not repeat, but received `' + JSON.stringify(value) + '`')
         }
@@ -398,7 +398,7 @@ function tokensToRegExp (tokens, options) {
 function pathToRegexp (path, keys, options) {
   keys = keys || []
 
-  if (!isarray(keys)) {
+  if (!isArray(keys)) {
     options = /** @type {!Object} */ (keys)
     keys = []
   } else if (!options) {
@@ -409,7 +409,7 @@ function pathToRegexp (path, keys, options) {
     return regexpToRegexp(path, /** @type {!Array} */ (keys))
   }
 
-  if (isarray(path)) {
+  if (isArray(path)) {
     return arrayToRegexp(/** @type {!Array} */ (path), /** @type {!Array} */ (keys), options)
   }
 

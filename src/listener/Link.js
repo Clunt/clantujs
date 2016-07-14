@@ -1,4 +1,4 @@
-import { bindEvent, removeEvent, preventDefault } from './lib/util'
+import { bindEvent, removeEvent, preventDefault } from '../lib/util'
 
 function which(evt) {
   evt = evt || window.event;

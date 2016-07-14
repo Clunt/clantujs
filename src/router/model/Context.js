@@ -1,4 +1,5 @@
 import querystring from '../lib/querystring'
+import { render } from '../../template'
 
 
 function Context(path, state) {
@@ -9,7 +10,7 @@ function Context(path, state) {
   pathname = ~hash_i ? pathname.slice(0, hash_i) : pathname;
 
   var search_i = pathname.indexOf('?');
-  search = ~search_i ? pathname.slice(search_i + 1) : '';
+  var search = ~search_i ? pathname.slice(search_i + 1) : '';
   pathname = ~search_i ? pathname.slice(0, search_i) : pathname;
 
   var query = querystring(search);
@@ -21,6 +22,7 @@ function Context(path, state) {
   this.$hash = hash;
   this.$querystring = search;
   this.$query = query;
+  this.$render = render;
 }
 
 export default Context

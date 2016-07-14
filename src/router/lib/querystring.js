@@ -1,4 +1,4 @@
-import { isarray } from './util'
+import { isArray } from '../../lib/util'
 
 export default function(querystring) {
   var ret = {};
@@ -16,7 +16,7 @@ export default function(querystring) {
 
     if (ret[key] === undefined) {
       ret[key] = val;
-    } else if (isarray(ret[key])) {
+    } else if (isArray(ret[key])) {
       ret[key].push(val);
     } else {
       ret[key] = [ret[key], val];

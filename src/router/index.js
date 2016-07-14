@@ -8,7 +8,7 @@ var PREV_CONTEXT;
 
 function match(path, state) {
   var ctx = new Context(path, state);
-  PATH_CURRENT = ctx.path;
+  PATH_CURRENT = ctx.$path;
   var prev_ctx = PREV_CONTEXT;
   var callbacks_index = 0;
   var exits_index = 0;
@@ -23,7 +23,7 @@ function match(path, state) {
 
   function nextEnter() {
     var fn = CALLBACKS[callbacks_index++];
-    if (ctx.path !== PATH_CURRENT) return;
+    if (ctx.$path !== PATH_CURRENT) return;
     if (!fn) return;
     fn(ctx, nextEnter);
   }
@@ -62,10 +62,5 @@ register.exit = function exit(path, fn) {
   }
 };
 
-
-export default {
-  register: register,
-  match: match
-}
 
 export { register, match }

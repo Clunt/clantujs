@@ -27,9 +27,7 @@
 ### 路由
 #### c.router(path, callback[, callback ...])
 #### c.router.exit(path, callback[, callback ...])
-#### c.router.error(path, callback[, callback ...])
-#### c.router.redirect(fromPath, toPath[, force])
-#### c.router.alias(fromPath, toPath)
+
 
 #### Route
 
