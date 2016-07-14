@@ -1,46 +1,23 @@
 /*!
- * Clantujs v1.0.0
+ * Clantujs v2.0.0
  * (c) 2016 Clunt
  * Released under the MIT License.
  */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global.C = factory());
+  (global.Clantu = factory());
 }(this, function () { 'use strict';
 
-  var toString = {}.toString;
-
-
-  function resolvePath(base, relative) {
-    var query = base.match(/(\?.*)$/)
-    if (query) {
-      query = query[1];
-      base = base.slice(0, -query.length);
+  var config = {
+    debug: false,
+    listener: {
+      root: null,
+      history: false
     }
-    if (relative.charAt(0) === '?') {
-      return base + relative
-    }
-    var stack = base.split('/')
-    if (!stack[stack.length - 1]) {
-      stack.pop();
-    }
-    var segments = relative.replace(/^\//, '').split('/');
-    for (var i = 0; i < segments.length; i++) {
-      var segment = segments[i]
-      if (segment === '.') {
-        continue
-      } else if (segment === '..') {
-        stack.pop();
-      } else {
-        stack.push(segment);
-      }
-    }
-    if (stack[0] !== '') {
-      stack.unshift('')
-    }
-    return stack.join('/')
   }
+
+  var toString = {}.toString;
 
   function bindEvent(elem, eventName, eventHandle) {
     if (elem && elem.addEventListener) {
@@ -64,67 +41,6 @@
     }
   };
 
-  var hashChange = (function() {
-    var hash_change_support = !(!('onhashchange' in window) && (document.documentMode === undefined || document.documentMode > 7));
-    var hash_change_support = false;
-    var simulation_id = null;
-    var simulation_callbacks = [];
-    var hash_callbacks = [];
-    function simulation_emit(evt) {
-      for (var i = 0; i < hash_callbacks.length; i++) {
-        var hash_callback = hash_callbacks[i];
-        if ('function' === typeof hash_callback) {
-          hash_callback(evt);
-        }
-      }
-    }
-
-    function simulation_start() {
-      if (simulation_id) return;
-      var location = window.location;
-      var oldURL = location.href;
-      var oldHash = location.hash;
-      simulation_id = setInterval(function() {
-        var newURL  = location.href,
-            newHash = location.hash;
-        if (newHash != oldHash) {
-          simulation_emit({
-            type: 'hashchange',
-            oldURL: oldURL,
-            newURL: newURL
-          });
-          oldURL = newURL;
-          oldHash = newHash;
-        }
-      }, 100);
-    }
-
-    var virtual = {
-      bind: function(onChange) {
-        bindEvent(window, 'hashchange', onChange);
-      },
-      remove: function(onChange) {
-        removeEvent(window, 'hashchange', onChange);
-      }
-    };
-
-    var simulation = {
-      bind: function(onChange) {
-        hash_callbacks.push(onChange);
-        simulation_start();
-      },
-      remove: function(onChange) {
-        for (var i = 0; i < hash_callbacks.length; i++) {
-          if (onChange === hash_callbacks[i](evt)) {
-            hash_callbacks[i] = null;
-          }
-        }
-      }
-    };
-
-    return hash_change_support ? virtual : simulation;
-  }());
-
   function preventDefault(evt) {
     // If preventDefault exists, run it on the original event
     if ( evt.preventDefault ) {
@@ -136,8 +52,28 @@
     }
   }
 
-  var isarray = Array.isArray || function (arr) {
+  var isArray = Array.isArray || function (arr) {
     return toString.call(arr) == '[object Array]';
+  };
+
+  function extend(obj) {
+    obj = typeof obj === 'object' ? obj : {};
+
+    var args = arguments;
+    if (args.length > 1) {
+      for (var i = 1; i < args.length; i++) {
+        var arg = args[i];
+        if (typeof arg === 'object' && !isArray(arg)) {
+          for (var key in arg) {
+            if (arg.hasOwnProperty(key)) {
+              var value = arg[key];
+              obj[key] = typeof value === 'object' ? extend(obj[key], value) : value;
+            }
+          }
+        }
+      }
+    }
+    return obj;
   }
 
   /**
@@ -420,7 +356,7 @@
   function pathToRegexp (path, keys, options) {
     keys = keys || []
 
-    if (!isarray(keys)) {
+    if (!isArray(keys)) {
       options = /** @type {!Object} */ (keys)
       keys = []
     } else if (!options) {
@@ -431,7 +367,7 @@
       return regexpToRegexp(path, /** @type {!Array} */ (keys))
     }
 
-    if (isarray(path)) {
+    if (isArray(path)) {
       return arrayToRegexp(/** @type {!Array} */ (path), /** @type {!Array} */ (keys), options)
     }
 
@@ -447,14 +383,14 @@
   Route.prototype.middleware = function(fn) {
     var self = this;
     return function(ctx, next) {
-      if (self.match(ctx, ctx.params)) return fn(ctx, next);
+      if (self.match(ctx, ctx.$params)) return fn(ctx, next);
       next();
     };
   };
 
   Route.prototype.match = function(ctx, params) {
     var keys = this.keys;
-    var pathname = ctx.pathname;
+    var pathname = ctx.$pathname;
     var m = this.regexp.exec(pathname);
 
     if (!m) return false;
@@ -486,7 +422,7 @@
 
       if (ret[key] === undefined) {
         ret[key] = val;
-      } else if (isarray(ret[key])) {
+      } else if (isArray(ret[key])) {
         ret[key].push(val);
       } else {
         ret[key] = [ret[key], val];
@@ -495,24 +431,526 @@
     return ret;
   }
 
-  function Context(path, state) {
-    this.state = state || {};
-    this.path = path;
-    this.params = {};
+  var store = {
+    cache: {},
+    helpers: {},
+    partials: {}
+  };
 
+  var defaults = {
+    openTag: '{{', // 逻辑语法开始标签
+    closeTag: '}}', // 逻辑语法结束标签
+    escape: true, // 是否编码输出变量的 HTML 字符
+    cache: true, // 是否开启缓存（依赖 options 的 filename 字段）
+    compress: false, // 是否压缩输出
+    parser: null // 自定义语法格式器
+  };
+
+  var filtered = function(js, filter) {
+    var parts = filter.split(':');
+    var name = parts.shift();
+    var args = parts.join(':') || '';
+
+    if (args) {
+      args = ', ' + args;
+    }
+
+    return '$helpers.' + name + '(' + js + args + ')';
+  }
+
+
+  defaults.parser = function(code, options) {
+    code = code.replace(/^\s/, '');
+
+    var split = code.split(' ');
+    var key = split.shift();
+    var args = split.join(' ');
+
+    switch (key) {
+      case 'if':
+        code = 'if(' + args + '){';
+        break;
+      case 'else':
+        if (split.shift() === 'if') {
+          split = ' if(' + split.join(' ') + ')';
+        } else {
+          split = '';
+        }
+        code = '}else' + split + '{';
+        break;
+      case '/if':
+        code = '}';
+        break;
+      case 'each':
+        var object = split[0] || '$data';
+        var as = split[1] || 'as';
+        var value = split[2] || '$value';
+        var index = split[3] || '$index';
+        var param = value + ',' + index;
+        if (as !== 'as') {
+          object = '[]';
+        }
+        code = '$each(' + object + ',function(' + param + '){';
+        break;
+      case '/each':
+        code = '});';
+        break;
+      case 'echo':
+        code = 'print(' + args + ');';
+        break;
+      case 'print':
+      case 'include':
+        code = key + '(' + split.join(',') + ');';
+        break;
+      default:
+        // 过滤器（辅助方法）
+        // {{value | filterA:'abcd' | filterB}}
+        // >>> $helpers.filterB($helpers.filterA(value, 'abcd'))
+        // TODO: {{ddd||aaa}} 不包含空格
+        if (/^\s*\|\s*[\w\$]/.test(args)) {
+          var escape = true;
+          // {{#value | link}}
+          if (code.indexOf('#') === 0) {
+            code = code.substr(1);
+            escape = false;
+          }
+
+          var i = 0;
+          var array = code.split('|');
+          var len = array.length;
+          var val = array[i++];
+          for (; i < len; i++) {
+            val = filtered(val, array[i]);
+          }
+          code = (escape ? '=' : '=#') + val;
+        } else {
+          code = '=' + code;
+        }
+        break;
+    }
+
+    return code;
+  };
+
+  function onerror(e) {
+    var message = 'Template Error\n\n';
+    for (var name in e) {
+      message += '<' + name + '>\n' + e[name] + '\n\n';
+    }
+    if (config.debug && typeof console === 'object') {
+      console.error(message);
+    }
+  }
+
+  // 模板调试器
+  var showDebugInfo$1 = function(e) {
+    onerror(e);
+    return function() {
+      return '{Template Error}';
+    };
+  };
+
+  function getCache(filename) {
+    return store.cache[filename];
+  }
+
+  function getPartial(partial) {
+    var partial_filename = 'partial:' + partial;
+    var cache = getCache(partial_filename);
+    if (!cache) {
+      var source = store.partials[partial];
+      if (source) {
+        // 编译模版片段
+        cache = compile$1(source, {
+          filename: partial_filename
+        });
+      }
+    }
+    return cache;
+  }
+
+  var toString$1 = function(value, type) {
+    if (typeof value !== 'string') {
+      type = typeof value;
+      if (type === 'number') {
+        value += '';
+      } else if (type === 'function') {
+        value = toString$1(value.call(value));
+      } else {
+        value = '';
+      }
+    }
+    return value;
+  };
+
+  var escapeMap = {
+    "<": "&#60;",
+    ">": "&#62;",
+    '"': "&#34;",
+    "'": "&#39;",
+    "&": "&#38;"
+  };
+
+  var escapeFn = function(s) {
+    return escapeMap[s];
+  };
+
+  var escapeHTML = function(content) {
+    return toString$1(content).replace(/&(?![\w#]+;)|[<>"']/g, escapeFn);
+  };
+
+  var each = function(data, callback) {
+    var i, len;
+    if (isArray(data)) {
+      for (i = 0, len = data.length; i < len; i++) {
+        callback.call(data, data[i], i, data);
+      }
+    } else {
+      for (i in data) {
+        callback.call(data, data[i], i);
+      }
+    }
+  };
+
+  var include = function (partial, data) {
+    var fn = getPartial(partial) || showDebugInfo({
+      partial: partial,
+      name: 'Render Error',
+      message: 'Partial not found'
+    });
+    return data ? fn(data) : fn;
+  };
+
+
+  var utils = {
+    $helpers: store.helpers,
+    $include: include,
+    $string: toString$1,
+    $escape: escapeHTML,
+    $each: each
+  };
+
+  // 数组迭代
+  var forEach = utils.$each;
+
+  // 静态分析模板变量
+  var KEYWORDS_ARR = [
+    // 关键字
+    'break', 'case', 'catch', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'false', 'finally', 'for', 'function', 'if', 'in', 'instanceof', 'new', 'null', 'return', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with'
+    // 保留字
+    , 'abstract', 'boolean', 'byte', 'char', 'class', 'const', 'double', 'enum', 'export', 'extends', 'final', 'float', 'goto', 'implements', 'import', 'int', 'interface', 'long', 'native', 'package', 'private', 'protected', 'public', 'short', 'static', 'super', 'synchronized', 'throws', 'transient', 'volatile'
+    // ECMA 5 - use strict
+    , 'arguments', 'let', 'yield'
+    , 'undefined'
+  ];
+
+  var REMOVE_RE = /\/\*[\w\W]*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|"(?:[^"\\]|\\[\w\W])*"|'(?:[^'\\]|\\[\w\W])*'|\s*\.\s*[$\w\.]+/g;
+  var SPLIT_RE = /[^\w$]+/g;
+  var KEYWORDS_RE = new RegExp(['\\b' + KEYWORDS_ARR.join('\\b|\\b') + '\\b'].join('|'), 'g');
+  var NUMBER_RE = /^\d[^,]*|,\d[^,]*/g;
+  var BOUNDARY_RE = /^,+|,+$/g;
+  var SPLIT2_RE = /^$|,+/;
+
+
+  // 获取变量
+  function getVariable(code) {
+    return code
+      .replace(REMOVE_RE, '')
+      .replace(SPLIT_RE, ',')
+      .replace(KEYWORDS_RE, '')
+      .replace(NUMBER_RE, '')
+      .replace(BOUNDARY_RE, '')
+      .split(SPLIT2_RE);
+  }
+
+
+  // 字符串转义
+  function stringify(code) {
+    return "'" + code
+      // 单引号与反斜杠转义
+      .replace(/('|\\)/g, '\\$1')
+      // 换行符转义(windows + linux)
+      .replace(/\r/g, '\\r')
+      .replace(/\n/g, '\\n') + "'";
+  }
+
+
+  function compiler(source, options) {
+    var debug = config.debug;
+
+    var openTag = options.openTag;
+    var closeTag = options.closeTag;
+    var parser = options.parser;
+    var compress = options.compress;
+    var escape = options.escape;
+
+    var line = 1;
+    var uniq = {
+      $data: 1,
+      $filename: 1,
+      $utils: 1,
+      $helpers: 1,
+      $out: 1,
+      $line: 1
+    };
+
+    // 拼接方式 字符串/数组
+    var isNewEngine = ''.trim;
+    var replaces = isNewEngine ? ["$out='';", "$out+=", ";", "$out"] : ["$out=[];", "$out.push(", ");", "$out.join('')"];
+
+    // 拼接语句
+    var concat = isNewEngine ? "$out+=text;return $out;" : "$out.push(text);";
+    var print = "function(){" + "var text=''.concat.apply('',arguments);" + concat + "}";
+    var include = "function(filename,data){" + "data=data||$data;" + "var text=$utils.$include(filename,data,$filename);" + concat + "}";
+
+    // 辅助代码
+    var headerCode = "'use strict';" + "var $utils=this,$helpers=$utils.$helpers," + (debug ? "$line=0," : "");
+    var mainCode = replaces[0];
+    var footerCode = "return new String(" + replaces[3] + ");"
+
+    // html与逻辑语法分离
+    forEach(source.split(openTag), function(code) {
+      code = code.split(closeTag);
+
+      var $0 = code[0];
+      var $1 = code[1];
+
+      if (code.length === 1) { // code: [html]
+        mainCode += html($0);
+      } else { // code: [logic, html]
+        mainCode += logic($0);
+        if ($1) {
+          mainCode += html($1);
+        }
+      }
+    });
+
+    var code = headerCode + mainCode + footerCode;
+
+    // 调试语句
+    if (debug) {
+      code = "try{" + code + "}catch(e){" + "throw {" + "filename:$filename," + "name:'Render Error'," + "message:e.message," + "line:$line," + "source:" + stringify(source) + ".split(/\\n/)[$line-1].replace(/^\\s+/,'')" + "};" + "}";
+    }
+
+    try {
+      var Render = new Function('$data', '$filename', code);
+      Render.prototype = utils;
+      return Render;
+    } catch (e) {
+      e.temp = 'function anonymous($data,$filename) {' + code + '}';
+      throw e;
+    }
+
+    // 处理 HTML 语句
+    function html(code) {
+      // 记录行号
+      line += code.split(/\n/).length - 1;
+
+      // 压缩多余空白与注释
+      if (compress) {
+        code = code
+          .replace(/\s+/g, ' ')
+          .replace(/<!--[\w\W]*?-->/g, '');
+      }
+
+      // 拼接JS代码
+      if (code) {
+        code = replaces[1] + stringify(code) + replaces[2] + '\n';
+      }
+
+      return code;
+    }
+
+
+    // 处理逻辑语句
+    function logic(code) {
+      var thisLine = line;
+
+      if (parser) {
+        // 语法转换插件钩子
+        code = parser(code, options);
+      } else if (debug) {
+        // 记录行号
+        code = code.replace(/\n/g, function() {
+          line++;
+          return '$line=' + line + ';';
+        });
+      }
+
+      // 输出语句. 编码: <%=value%> 不编码:<%=#value%>
+      // <%=#value%> 等同 v2.0.3 之前的 <%==value%>
+      if (code.indexOf('=') === 0) {
+        var escapeSyntax = escape && !/^=[=#]/.test(code);
+        code = code.replace(/^=[=#]?|[\s;]*$/g, '');
+        // 对内容编码
+        if (escapeSyntax) {
+          var name = code.replace(/\s*\([^\)]+\)/, '');
+          // 排除 utils.* | include | print
+          if (!utils[name] && !/^(include|print)$/.test(name)) {
+            code = "$escape(" + code + ")";
+          }
+        } else { // 不编码
+          code = "$string(" + code + ")";
+        }
+        code = replaces[1] + code + replaces[2];
+      }
+
+      if (debug) {
+        code = '$line=' + thisLine + ';' + code;
+      }
+
+      // 提取模板中的变量名
+      forEach(getVariable(code), function(name) {
+        // name 值可能为空，在安卓低版本浏览器下
+        if (!name || uniq[name]) {
+          return;
+        }
+        var value;
+        // 声明模板变量
+        // 赋值优先级:
+        // [include, print] > utils > data
+        if (name === 'print') {
+          value = print;
+        } else if (name === 'include') {
+          value = include;
+        } else if (utils[name]) {
+          value = '$utils.' + name;
+        } else {
+          value = '$data.' + name;
+        }
+        headerCode += name + '=' + value + ',';
+        uniq[name] = true;
+      });
+      return code + '\n';
+    }
+  };
+
+  /**
+   * 编译模板
+   * @param  {String} source  模板字符串
+   * @param  {Object} options 编译选项
+   *
+   *      - openTag       {String}
+   *      - closeTag      {String}
+   *      - filename      {String}
+   *      - escape        {Boolean}
+   *      - compress      {Boolean}
+   *      - debug         {Boolean}
+   *      - cache         {Boolean}
+   *      - parser        {Function}
+   *
+   * @return {Function}  渲染方法
+   */
+  function compile$1(source, options) {
+    // 合并默认配置
+    options = extend({}, defaults, options);
+
+    var filename = options.filename;
+    try {
+      var Render = compiler(source, options);
+    } catch (e) {
+      e.filename = filename || 'anonymous';
+      e.name = 'Syntax Error';
+      return showDebugInfo$1(e);
+    }
+
+    // 对编译结果进行一次包装
+    function render(data) {
+      try {
+        return new Render(data) + '';
+      } catch (e) {
+        return showDebugInfo$1(e)();
+      }
+    }
+
+    render.prototype = Render.prototype;
+    render.toString = function() {
+      return Render.toString();
+    };
+
+    if (filename && options.cache) {
+      store.cache[filename] = render;
+    }
+
+    return render;
+  };
+
+  /**
+   * 渲染模版
+   * @name   template.render
+   * @param  {String} source  模版
+   * @param  {Object} data    数据
+   * @param  {Object} options 配置参数
+   * @return {String}         渲染好的字符串
+   */
+  function render(source, data, options) {
+    options = options || {};
+    if (options.cache === false) {
+      store[options.filename] = undefined;
+    }
+    var render = getCache(options.filename) || compile$1(source, options);
+    return render(data);
+  };
+
+  /**
+   * 添加模板辅助方法
+   * @name   template.helper
+   * @param  {String}   name   名称
+   * @param  {Function} helper 方法
+   */
+  function helper(name, helper) {
+    store.helpers[name] = helper;
+  }
+
+  /**
+   * 添加模板片段
+   * @name   template.helper
+   * @param  {String} name    名称
+   * @param  {String} partial 模版片段
+   */
+  function partial(name, partial) {
+    store.partials[name] = partial;
+  }
+
+  function template(source, options) {
+    options = options || {};
+    if (options.cache === false) {
+      store[options.filename] = undefined;
+    }
+    return getCache(options.filename) || compile$1(source, options);
+  }
+
+  template.render = render;
+
+  template.helper = helper;
+
+  template.partial = partial;
+
+  function Context(path, state, referer, prev_ctx) {
     var pathname = path;
-    var hashIndex = pathname.indexOf('#');
 
-    this.hash = ~hashIndex ? pathname.slice(hashIndex + 1) : '';
-    pathname = ~hashIndex ? pathname.slice(0, hashIndex) : pathname;
+    var hash_i = pathname.indexOf('#');
+    var hash = ~hash_i ? pathname.slice(hash_i + 1) : '';
+    pathname = ~hash_i ? pathname.slice(0, hash_i) : pathname;
 
-    var searchIndex = pathname.indexOf('?');
+    var search_i = pathname.indexOf('?');
+    var search = ~search_i ? pathname.slice(search_i + 1) : '';
+    pathname = ~search_i ? pathname.slice(0, search_i) : pathname;
 
-    this.querystring = ~searchIndex ? pathname.slice(searchIndex + 1) : '';
-    pathname = ~searchIndex ? pathname.slice(0, searchIndex) : pathname;
+    var query = querystring(search);
 
-    this.query = querystring(this.querystring);
-    this.pathname = pathname;
+    this.$state = state || {};
+    this.$path = path;
+    this.$params = {};
+    this.$pathname = pathname;
+    this.$hash = hash;
+    this.$querystring = search;
+    this.$query = query;
+    this.$referer = referer;
+
+    this.$prev = prev_ctx;
+
+    this.$render = render;
   }
 
   var PATH_CURRENT = '';
@@ -521,8 +959,8 @@
   var PREV_CONTEXT;
 
   function match(path, state) {
-    var ctx = new Context(path, state);
-    PATH_CURRENT = ctx.path;
+    var ctx = new Context(path, state, PATH_CURRENT, PREV_CONTEXT);
+    PATH_CURRENT = ctx.$path;
     var prev_ctx = PREV_CONTEXT;
     var callbacks_index = 0;
     var exits_index = 0;
@@ -537,7 +975,7 @@
 
     function nextEnter() {
       var fn = CALLBACKS[callbacks_index++];
-      if (ctx.path !== PATH_CURRENT) return;
+      if (ctx.$path !== PATH_CURRENT) return;
       if (!fn) return;
       fn(ctx, nextEnter);
     }
@@ -576,10 +1014,95 @@
     }
   };
 
+  var hashChange = (function() {
+    var hash_change_support = !(!('onhashchange' in window) && (document.documentMode === undefined || document.documentMode > 7));
+    var hash_change_support = false;
+    var simulation_id = null;
+    var simulation_callbacks = [];
+    var hash_callbacks = [];
+    function simulation_emit(evt) {
+      for (var i = 0; i < hash_callbacks.length; i++) {
+        var hash_callback = hash_callbacks[i];
+        if ('function' === typeof hash_callback) {
+          hash_callback(evt);
+        }
+      }
+    }
 
-  var router = {
-    register: register,
-    match: match
+    function simulation_start() {
+      if (simulation_id) return;
+      var location = window.location;
+      var oldURL = location.href;
+      var oldHash = location.hash;
+      simulation_id = setInterval(function() {
+        var newURL  = location.href,
+            newHash = location.hash;
+        if (newHash != oldHash) {
+          simulation_emit({
+            type: 'hashchange',
+            oldURL: oldURL,
+            newURL: newURL
+          });
+          oldURL = newURL;
+          oldHash = newHash;
+        }
+      }, 100);
+    }
+
+    var virtual = {
+      bind: function(onChange) {
+        bindEvent(window, 'hashchange', onChange);
+      },
+      remove: function(onChange) {
+        removeEvent(window, 'hashchange', onChange);
+      }
+    };
+
+    var simulation = {
+      bind: function(onChange) {
+        hash_callbacks.push(onChange);
+        simulation_start();
+      },
+      remove: function(onChange) {
+        for (var i = 0; i < hash_callbacks.length; i++) {
+          if (onChange === hash_callbacks[i](evt)) {
+            hash_callbacks[i] = null;
+          }
+        }
+      }
+    };
+
+    return hash_change_support ? virtual : simulation;
+  }());
+
+  function resolvePath(base, relative) {
+    var query = base.match(/(\?.*)$/)
+    if (query) {
+      query = query[1];
+      base = base.slice(0, -query.length);
+    }
+    if (relative.charAt(0) === '?') {
+      return base + relative
+    }
+    var stack = base.split('/')
+    if (!stack[stack.length - 1]) {
+      stack.pop();
+    }
+    var segments = relative.replace(/^\//, '').split('/');
+    for (var i = 0; i < segments.length; i++) {
+      var segment = segments[i]
+      if (segment === '.') {
+        continue
+      } else if (segment === '..') {
+        stack.pop();
+      } else {
+        stack.push(segment);
+      }
+    }
+    if (stack[0] !== '') {
+      stack.unshift('')
+    }
+    return stack.join('/')
   }
 
   function HashHistory(option) {
@@ -610,6 +1133,11 @@
   };
 
   HashHistory.prototype.go = function(path, replace) {
+    var location = window.location;
+    if (path.indexOf('#') === 0) {
+      location.hash = '#!' + location.hash.replace(/^#!/, '').replace(/#.*/g, '') + path;
+      return;
+    }
     path = this.formatPath(path);
     location.hash = path;
   };
@@ -655,6 +1183,10 @@
   };
 
   Html5History.prototype.go = function(path, replace) {
+    if (path.indexOf('#') === 0) {
+      window.location.hash = path;
+      return;
+    }
     var url = this.formatPath(path);
     if (replace) {
       history.replaceState({}, '', url);
@@ -739,60 +1271,35 @@
     html5: Html5History
   };
 
-  var c = null;
 
-  /**
-   * C
-   * @param {Object} option
-   * {
-   *   root
-   *   history
-   * }
-   */
-  function C(option) {
+  function Listener(option, callback) {
     option = option || {};
-    if (!(this instanceof C)) {
-      return new C(option);
-    }
-
     var self = this;
-    this.running = false;
 
     var root = 'undefined' === typeof option.root ? null : option.root;
     this.root = root;
 
-    // check if HTML5 history is available
+    // Check if HTML5 history is available
     var hasPushState = typeof window !== 'undefined' && window.history && window.history.pushState;
     this._history = option.history && hasPushState;
     this._historyFallback = option.history && !hasPushState;
 
     this.mode = this._history ? 'html5' : 'hash';
-    var History = historyBackends[this.mode]
+    var History = historyBackends[this.mode];
 
     this.history = new History({
       root: root,
-      onChange: function(path, state) {
-        router.match(path, state);
-      }
+      onChange: callback
     });
 
     this.link = new Link({
       onClick: function(path) {
-        if (self._history && 0 === path.indexOf('#')) {
-          location.hash = path;
-        } else {
-          self.go(path);
-        }
+        self.history.go(path);
       }
     });
   }
 
-  C.prototype.router = router.register;
-
-  C.prototype.start = function(option) {
-    if (this.running) return;
-    this.running = true;
-
+  Listener.prototype.start = function() {
     var location = window.location;
 
     // handle history fallback in browsers that do not support HTML5 history API
@@ -824,35 +1331,67 @@
       }
     }
 
-    this.link.start();
     this.history.start();
+    this.link.start();
   };
 
-  C.prototype.stop = function() {
+  Listener.prototype.stop = function() {
     this.history.stop();
     this.link.stop();
     this.running = false;;
   };
 
-  C.prototype.show = function(path) {
-    router.match(path);
-  };
+  var app = null;
+  var router = register;
 
-  C.prototype.go = function(path) {
-    this.history.go(path);
-  };
+  function Clantu(option) {
+    option = extend(config, option);
 
-  C.prototype.replace = function(path) {
-    this.history.go(path, true);
-  };
-
-  function index(option) {
-    if (!c) {
-      c = new C(option);
-    }
-    return c;
+    var self = this;
+    this.running = false;
+    this.listener = new Listener(option.listener, function(path, state) {
+      match(path, state);
+    });
   }
 
-  return index;
+  Clantu.prototype.router = router;
+
+  Clantu.prototype.template = template;
+
+  Clantu.prototype.render = render;
+
+  Clantu.prototype.start = function(option) {
+    if (this.running) return;
+    this.running = true;
+    this.listener.start();
+  };
+
+  Clantu.prototype.stop = function() {
+    this.listener.stop();
+    this.running = false;;
+  };
+
+  Clantu.prototype.show = function(path) {
+    match(path);
+  };
+
+  Clantu.prototype.go = function(path) {
+    this.listener.history.go(path);
+  };
+
+  Clantu.prototype.replace = function(path) {
+    this.listener.history.go(path, true);
+  };
+
+
+  function exports$1(option) {
+    return app || ( app = new Clantu(option) );
+  }
+
+  exports$1.router = router;
+  exports$1.template = template;
+  exports$1.render = render;
+
+  return exports$1;
 
 }));
