@@ -3,7 +3,7 @@ import { configRouter } from './route-config'
 
 var app = C({
   listener: {
-    history: true,
+    history: false,
     root: '/v1'
   }
 });

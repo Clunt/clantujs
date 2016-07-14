@@ -36,6 +36,10 @@ Html5History.prototype.stop = function() {
 };
 
 Html5History.prototype.go = function(path, replace) {
+  if (path.indexOf('#') === 0) {
+    window.location.hash = path;
+    return;
+  }
   var url = this.formatPath(path);
   if (replace) {
     history.replaceState({}, '', url);

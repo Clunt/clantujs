@@ -28,6 +28,11 @@ HashHistory.prototype.stop = function() {
 };
 
 HashHistory.prototype.go = function(path, replace) {
+  var location = window.location;
+  if (path.indexOf('#') === 0) {
+    location.hash = '#!' + location.hash.replace(/^#!/, '').replace(/#.*/g, '') + path;
+    return;
+  }
   path = this.formatPath(path);
   location.hash = path;
 };

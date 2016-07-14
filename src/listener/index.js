@@ -30,11 +30,7 @@ function Listener(option, callback) {
 
   this.link = new Link({
     onClick: function(path) {
-      if (self._history && 0 === path.indexOf('#')) {
-        window.location.hash = path;
-      } else {
-        self.history.go(path);
-      }
+      self.history.go(path);
     }
   });
 }
