@@ -1,5 +1,5 @@
 import querystring from '../lib/querystring'
-import { render } from '../../template'
+import { render } from '../../template/index'
 
 
 function Context(path, state, referer, prev_ctx) {

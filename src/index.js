@@ -1,8 +1,8 @@
 import config from './config'
 import { extend } from './lib/util'
-import { register, match } from './router'
-import template, { render } from './template'
-import Listener from './listener'
+import { register, match } from './router/index'
+import template, { render } from './template/index'
+import Listener from './listener/index'
 
 var app = null;
 var router = register;
@@ -47,8 +47,12 @@ Clantu.prototype.replace = function(path) {
 };
 
 
-export default function(option) {
+function exports(option) {
   return app || ( app = new Clantu(option) );
 }
 
-export { router, template, render }
+exports.router = router;
+exports.template = template;
+exports.render = render;
+
+export default exports
