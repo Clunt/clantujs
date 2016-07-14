@@ -1,9 +1,9 @@
-import C from '../../src'
+import Clantu from '../../src'
 import { configRouter } from './route-config'
 
-var app = C({
+var app = Clantu({
   listener: {
-    history: false,
+    history: true,
     root: '/v1'
   }
 });

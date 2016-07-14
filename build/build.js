@@ -17,7 +17,7 @@ rollup.rollup({
   return write('dist/clantu.js', bundle.generate({
     format: 'umd',
     banner: banner,
-    moduleName: 'C'
+    moduleName: 'Clantu'
   }).code)
 })
 .then(function () {

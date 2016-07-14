@@ -1,8 +1,8 @@
-import C from '../../src'
+import Clantu from '../../src'
 
 
 export function configRouter() {
-  var app = C();
+  var app = Clantu();
   var router = app.router;
 
   app.template.helper('lang', function(data) {

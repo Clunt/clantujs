@@ -3,7 +3,7 @@ module.exports = {
   output: {
     path: './dist',
     filename: 'clantu.js',
-    library: 'C',
+    library: 'Clantu',
     libraryTarget: 'umd'
   },
   module: {

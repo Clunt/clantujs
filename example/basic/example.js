@@ -1,4 +1,4 @@
-var app = C({
+var app = Clantu({
 });
 
 var router = app.router;
