@@ -1,5 +1,5 @@
 /*!
- * Clantujs v2.0.0
+ * Clantujs v2.1.0
  * (c) 2016 Clunt
  * Released under the MIT License.
  */
@@ -884,6 +884,11 @@
    * @return {String}         渲染好的字符串
    */
   function render(source, data, options) {
+    if (typeof options === 'string') {
+      options = {
+        filename: options
+      };
+    }
     options = options || {};
     if (options.cache === false) {
       store[options.filename] = undefined;
@@ -913,6 +918,11 @@
   }
 
   function template(source, options) {
+    if (typeof options === 'string') {
+      options = {
+        filename: options
+      };
+    }
     options = options || {};
     if (options.cache === false) {
       store[options.filename] = undefined;
