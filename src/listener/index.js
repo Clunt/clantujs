@@ -57,7 +57,7 @@ Listener.prototype.start = function() {
   // handle history enhance in browsers that support HTML5 history API
   if (this._history) {
     var url = location.pathname.replace(/\/$/, '') + '/' + location.search + location.hash;
-    var urlRE = new RegExp('^\\' + this.history.root + '\/#!/')
+    var urlRE = new RegExp('^\\' + (this.history.root || '') + '\/#!/')
     if (urlRE.test(url)) {
       location.assign(
         (this.history.root || '') + '/' +
