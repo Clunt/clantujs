@@ -7,13 +7,11 @@ module.exports = {
     filename: 'example.build.js'
   },
   module: {
-    loaders: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules\/dist/,
-        loader: 'babel-loader'
-      }
-    ]
+    loaders: [{
+      test: /\.js$/,
+      exclude: /node_modules\/dist/,
+      loader: 'babel-loader'
+    }]
   },
   devtool: 'source-map'
 }

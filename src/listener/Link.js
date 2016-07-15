@@ -2,7 +2,16 @@ import { bindEvent, removeEvent, preventDefault } from '../lib/util'
 
 function which(evt) {
   evt = evt || window.event;
-  return null === evt.which ? evt.button : evt.which;
+
+  var click = evt.which;
+  // Add which for click: 1 === left; 2 === middle; 3 === right
+  // Note: button is not normalized, so don't use it
+  if ( !evt.which && evt.button !== undefined ) {
+    click = ( evt.button & 1 ? 1 : ( evt.button & 2 ? 3 : ( evt.button & 4 ? 2 : 0 ) ) );
+  }
+
+  alert('self: ' + click)
+  return click;
 }
 
 function sameOrigin(href) {
@@ -18,6 +27,7 @@ function Link(option) {
 Link.prototype.start = function() {
   var self = this;
   this.listener = function(evt) {
+    preventDefault(evt);
     if (1 !== which(evt)) return;
 
     if (evt.metaKey || evt.ctrlKey || evt.shiftKey) return;

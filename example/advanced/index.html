@@ -3,13 +3,18 @@
 <head>
   <meta charset="utf-8">
   <title>Clantu.js Advanced Example</title>
+  <script>
+    function _socket() {}
+    _socket.prototype.close = function() {};
+    window.WebSocket = window.WebSocket || window.MozWebSocket || _socket;
+  </script>
 </head>
 <body>
   <ul>
     <li><a href="/中文 EN+C">中文 EN+C</a></li>
     <li><a href="/first-path">first-path</a></li>
     <li><a href="/path#hash">path#hash</a></li>
-    <li><a href="/query?a=b&name=姓名">query?a=b&name=姓名</a></li>
+    <li><a href="/query?a=b">query?a=b</a></li>
     <li><a href="#new-hash">#new-hash</a></li>
     <li><a href="./relative-path">relative-path</a></li>
     <li><a href="../parent-path">parent-path</a></li>
@@ -17,6 +22,13 @@
     <li><a href="/blank" target="_blank">target blank</a></li>
   </ul>
   <div id="content"></div>
+  <script src="//cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+  <script>
+  $('body').click(function(event) {
+    alert('jquery: ' + event.which)
+  })
+  </script>
+  <script src="http://cdn.bootcss.com/es5-shim/4.5.9/es5-shim.min.js"></script>
   <script src="http://localhost:8080/webpack-dev-server.js"></script>
   <script src="/example.build.js"></script>
 </body>

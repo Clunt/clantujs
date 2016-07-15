@@ -6,7 +6,6 @@ export function configRouter() {
   var router = app.router;
 
   app.template.helper('lang', function(data) {
-    console.log(arguments)
     return data;
   });
 
@@ -14,7 +13,7 @@ export function configRouter() {
   app.template.partial('content', '{{#lang}}');
 
   router('/query', function(ctx, next) {
-    console.log('query', ctx)
+    // console.log('query', ctx)
     document.getElementById('content').innerHTML = 'query';
     setTimeout(function() {
       next();
