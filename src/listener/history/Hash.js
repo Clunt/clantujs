@@ -29,19 +29,18 @@ HashHistory.prototype.stop = function() {
 
 HashHistory.prototype.go = function(path, replace) {
   var location = window.location;
-  if (path.indexOf('#') === 0) {
-    location.hash = '#!' + location.hash.replace(/^#!/, '').replace(/#.*/g, '') + path;
-    return;
-  }
   path = this.formatPath(path);
   location.hash = path;
 };
 
 HashHistory.prototype.formatPath = function(path) {
   var prefix = '#!';
-  return path.charAt(0) === '/'
+  var start = path.charAt(0);
+  return start === '/'
     ? prefix + path
-    : prefix + resolvePath(location.hash.replace(/^#!/, ''), path);
+    : start === '#'
+      ? prefix + location.hash.replace(/^#!/, '').replace(/#.*/g, '') + path
+      : prefix + resolvePath(location.hash.replace(/^#!/, '').replace(/#.*/g, ''), path);
 };
 
 export default HashHistory
