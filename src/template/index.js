@@ -8,6 +8,11 @@ import partial from './method/partial'
 
 
 function template(source, options) {
+  if (typeof options === 'string') {
+    options = {
+      filename: options
+    };
+  }
   options = options || {};
   if (options.cache === false) {
     store[options.filename] = undefined;

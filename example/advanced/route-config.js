@@ -29,10 +29,8 @@ export function configRouter() {
       }
     };
     var options = {};
-    var render = app.template(template);
+    var render = app.template(template, 'filename');
     var html = render(data);
-    // var html = ctx.$render(template, data, options);
-    console.log(render.toString())
     document.getElementById('content').innerHTML = html;
   });
 }

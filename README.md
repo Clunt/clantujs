@@ -6,27 +6,32 @@
 `npm install --save clantujs`
 
 ## 示例
+```sh
+npm install
+npm run serve-example
+```
+
 ## Api
 ### 基础
-#### c.start([options])
+#### clantu.start([options])
 启动应用
 
-#### c.stop()
+#### clantu.stop()
 停止应用
 
-#### c.show(path)
+#### clantu.show(path)
 匹配新的路由，浏览器URL不改变
 
-#### c.go(path)
+#### clantu.go(path)
 导航到一个新的路由，浏览器URL改变，增加一条历史记录
 
-#### c.replace(path[, force])
+#### clantu.replace(path[, force])
 导航到一个新的路由，浏览器URL改变，不增加历史记录
 
 
 ### 路由
-#### c.router(path, callback[, callback ...])
-#### c.router.exit(path, callback[, callback ...])
+#### clantu.router(path, callback[, callback ...])
+#### clantu.router.exit(path, callback[, callback ...])
 
 
 #### Route
@@ -38,26 +43,23 @@
 `ctx.$hash`
 `ctx.$querystring`
 `ctx.$query`
-`ctx.$render(template_source, data)`
+`ctx.$render(source, data)`
 
 
 ### 模版
-### c.render(template_source, data)
+### clantu.render(source, data, options|filename)
 返回渲染结果
 
-### c.template(source, options)
+### clantu.template(source, options|filename)
 返回一个渲染函数
 
-### c.template.config(options)
-更改模版引擎的默认配置
-
-### c.template.helper(name, callback)
+### clantu.template.helper(name, callback)
 添加辅助方法
 
-### c.template.partial(name, callback)
+### clantu.template.partial(name, callback)
 添加模板片段
 
-### c.template.render(template_source, data)
+### clantu.template.render(source, data, options|filename)
 返回渲染结果
 
 

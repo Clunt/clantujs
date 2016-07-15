@@ -12,6 +12,11 @@ import { getCache } from '../lib/get'
  * @return {String}         渲染好的字符串
  */
 export default function render(source, data, options) {
+  if (typeof options === 'string') {
+    options = {
+      filename: options
+    };
+  }
   options = options || {};
   if (options.cache === false) {
     store[options.filename] = undefined;
